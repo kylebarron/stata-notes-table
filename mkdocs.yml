@@ -1,0 +1,32 @@
+# Project Information
+site_name: stata-notes-table
+site_description: 'Stata code to make summary tables in an automated fashion'
+site_author: 'Kyle Barron'
+
+docs_dir: 'docs'
+site_dir: 'site'
+
+# Repository
+repo_name: 'stata-notes-table'
+repo_url: 'https://github.com/kylebarron/stata-notes-table'
+
+# Copyright
+copyright: 'Copyright &copy; 2017 Mauricio Cáceres Bravo and Kyle Barron'
+
+# Theme
+theme: 'material'
+
+# Options
+extra:
+    palette:
+        primary: 'orange'
+        accent:  'light blue'
+
+markdown_extensions:
+    - admonition
+    - codehilite
+    - footnotes
+    - meta
+    - pymdownx.smartsymbols
+    - pymdownx.tasklist(custom_checkbox=true)
+    - pymdownx.tilde
