@@ -1,4 +1,5 @@
-*! version 0.1 6Sep2016 Mauricio Caceres, caceres@nber.org
+*! version 0.2 2018-01-05 Kyle Barron, barronk@nber.org
+*! version 0.1 created by Mauricio Caceres, caceres@nber.org
 *! Make notes for my standard data description appendix table
 
 capture program drop make_notes
@@ -17,7 +18,11 @@ program make_notes
             OUTdata(str)      ///
             pctmiss           ///
             addobs            ///
-            replace           ///
+            replace           /// Whether to replace the file
+            markdown          /// To be rendered as a pipe table readable by Pandoc https://pandoc.org
+            colwidths(numlist integer) ///
+            cols(str)         /// Columns to export
+                              ///     name, notes, pct_miss, obs, dups, label, short, type, order, all
         ]
 
     marksample touse, strok novarlist
@@ -154,15 +159,81 @@ program make_notes
         local output = `"`output'||"'
     }
 
-    di `"`output'"'
     if ("`outdata'" != "") {
+        * Determine which columns to write
+        if ("`cols'" == "" | "`cols'" == "all") local cols "all"
+        else {
+            forval i = 1 / `:word count `cols'' {
+                local word = "`:word `i' of `cols''"
+                local `word' = "`word'"
+            }
+        }
+        
+        if ("`name'" == "name" | "`cols'" == "all")         local 1 "True"
+        if ("`notes'" == "notes" | "`cols'" == "all")       local 2 "True"
+        if ("`pct_miss'" == "pct_miss" | "`cols'" == "all") local 3 "True"
+        if ("`obs'" == "obs" | "`cols'" == "all")           local 4 "True"
+        if ("`dups'" == "dups" | "`cols'" == "all")         local 5 "True"
+        if ("`label'" == "label" | "`cols'" == "all")       local 6 "True"
+        if ("`short'" == "short" | "`cols'" == "all")       local 7 "True"
+        if ("`type'" == "type" | "`cols'" == "all")         local 8 "True"
+        if ("`order'" == "order" | "`cols'" == "all")       local 9 "True"
+        
         if ("`replace'" != "") {
             file open filein using `outdata', write replace
-            file write filein `"name|notes|pct_miss|obs|dups|label|short|type|order"' _n
+            local mdheader `"Name|Notes|Percent Missing|Obs|Duplicates|Label|Short label|Type|order"'
+            local rawheader `"name|notes|pct_miss|obs|dups|label|short|type|order"'
+
+            foreach header in mdheader rawheader {
+                qui di ustrregexm("``header''", "^(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)$")
+                
+                local head
+                forval i = 1/9 {
+                    if ("``i''" == "True") {
+                        local str = ustrregexs(`i')
+                        local head "`head'`str'|"
+                    }
+                }
+                local head = substr("`head'", 1, length("`head'") - 1)
+                local new_`header' "`head'"
+            }
+            
+            if ("`colwidths'" != "") {
+                local breakln
+                foreach val of local colwidths {
+                    local dashes = "-" * `val'
+                    local breakln "`breakln'`dashes'|"
+                }
+                local breakln = substr("`breakln'", 1, length("`breakln'") - 1)
+            }
+            else {
+                local breakln = ustrregexra("`head'", "(?<=\||^)[^-]*?(?=\||$)", "--")
+            }
+            
+            if ("`markdown'" != "") {
+                file write filein `"`new_mdheader'"' _n
+                file write filein `"`breakln'"' _n
+            }
+            else {
+                file write filein `"`rawheader'"' _n
+            }
             file close filein
         }
         file open filein using `outdata', write append
-        file write filein `"`output'|`:variable label `varlist''|`short'|`:type `varlist''|`order'"' _n
+        local would_be_final_text `"`output'|`:variable label `varlist''|`short'|`:type `varlist''|`order'"'
+        
+        qui di ustrregexm("`would_be_final_text'", "^(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)$")
+        local final_text
+        forval i = 1 / 9 {
+            if ("``i''" == "True") {
+                local str = ustrregexs(`i')
+                local final_text "`final_text'`str'|"
+            }
+        }
+        local final_text = substr("`final_text'", 1, length("`final_text'") - 1)
+        di `"`final_text'"'
+        
+        file write filein `"`final_text'"' _n
         file close filein
     }
 end
