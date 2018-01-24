@@ -2,6 +2,8 @@
 *! version 0.1 created by Mauricio Caceres, caceres@nber.org
 *! Make notes for my standard data description appendix table
 
+qui do "tabcustom.ado"
+
 capture program drop make_notes
 program make_notes
     syntax varname [if] [in], ///
