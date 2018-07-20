@@ -2,8 +2,6 @@
 *! version 0.1 created by Mauricio Caceres, caceres@nber.org
 *! Make notes for my standard data description appendix table
 
-qui do "tabcustom.ado"
-
 capture program drop make_notes
 program make_notes
     syntax varname [if] [in], ///
@@ -170,7 +168,7 @@ program make_notes
                 local `word' = "`word'"
             }
         }
-        
+
         if ("`name'" == "name" | "`cols'" == "all")         local 1 "True"
         if ("`notes'" == "notes" | "`cols'" == "all")       local 2 "True"
         if ("`pct_miss'" == "pct_miss" | "`cols'" == "all") local 3 "True"
@@ -180,7 +178,7 @@ program make_notes
         if ("`short'" == "short" | "`cols'" == "all")       local 7 "True"
         if ("`type'" == "type" | "`cols'" == "all")         local 8 "True"
         if ("`order'" == "order" | "`cols'" == "all")       local 9 "True"
-        
+
         if ("`replace'" != "") {
             file open filein using `outdata', write replace
             local mdheader `"Name|Notes|Percent Missing|Obs|Duplicates|Label|Short label|Type|order"'
@@ -188,7 +186,7 @@ program make_notes
 
             foreach header in mdheader rawheader {
                 qui di ustrregexm("``header''", "^(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)$")
-                
+
                 local head
                 forval i = 1/9 {
                     if ("``i''" == "True") {
@@ -199,7 +197,7 @@ program make_notes
                 local head = substr("`head'", 1, length("`head'") - 1)
                 local new_`header' "`head'"
             }
-            
+
             if ("`colwidths'" != "") {
                 local breakln
                 foreach val of local colwidths {
@@ -211,7 +209,7 @@ program make_notes
             else {
                 local breakln = ustrregexra("`head'", "(?<=\||^)[^-]*?(?=\||$)", "--")
             }
-            
+
             if ("`markdown'" != "") {
                 file write filein `"`new_mdheader'"' _n
                 file write filein `"`breakln'"' _n
@@ -223,7 +221,7 @@ program make_notes
         }
         file open filein using `outdata', write append
         local would_be_final_text `"`output'|`:variable label `varlist''|`short'|`:type `varlist''|`order'"'
-        
+
         qui di ustrregexm("`would_be_final_text'", "^(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)\|(.*)$")
         local final_text
         forval i = 1 / 9 {
@@ -234,7 +232,7 @@ program make_notes
         }
         local final_text = substr("`final_text'", 1, length("`final_text'") - 1)
         di `"`final_text'"'
-        
+
         file write filein `"`final_text'"' _n
         file close filein
     }
